@@ -31,8 +31,9 @@ static const NSString *oauthVersion = @"1.0";
 
 - (NSArray *)oauthGenerateTimestampAndNonce
 {
-    static time_t last_timestamp = -1;
+    /*static time_t last_timestamp = -1;
     static NSMutableSet *nonceHistory = nil;
+    
     
     // Make sure we never send the same timestamp and nonce
     if (!nonceHistory)
@@ -65,7 +66,22 @@ static const NSString *oauthVersion = @"1.0";
         last_timestamp = tv.tv_sec;
         [nonceHistory removeAllObjects];
     }
+
     [nonceHistory addObject:nonce];
+     */
+    
+    // The algorithm wasn't generating unique-enough nonces for our server.
+    // I pulled this code from the Google OAuth lib. It seems sane and comparable.
+    // http://code.google.com/p/gtm-oauth/source/browse/trunk/Source/GTMOAuthAuthentication.m
+    NSTimeInterval timeInterval = [[NSDate date] timeIntervalSince1970];
+    unsigned long long timestampVal = (unsigned long long) timeInterval;
+    NSString *timestamp = [NSString stringWithFormat:@"%qu", timestampVal];
+    
+    // make a random 64-bit number
+    unsigned long long nonceVal = ((unsigned long long) arc4random()) << 32
+    | (unsigned long long) arc4random();
+    
+    NSString *nonce = [NSString stringWithFormat:@"%qu", nonceVal];
     
     return [NSArray arrayWithObjects:[NSDictionary dictionaryWithObjectsAndKeys:@"oauth_timestamp", @"key", timestamp, @"value", nil], [NSDictionary dictionaryWithObjectsAndKeys:@"oauth_nonce", @"key", nonce, @"value", nil], nil];
 }
